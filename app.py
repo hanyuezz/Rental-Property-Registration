@@ -1,82 +1,145 @@
 import streamlit as st
-import plotly.express as px
 import pandas as pd
+import plotly.express as px
 
-# 1. Page Configuration
-st.set_page_config(page_title="Seattle Crime Explorer", layout="wide")
-
-st.title("Seattle Crime Data Interactive Explorer (2025-Present)")
-st.markdown("This dashboard focuses on recent crime patterns in Seattle (2025-2026).")
-
-# 2. Load Data
-@st.cache_data
-def load_data():
-    data = pd.read_csv('seattle_crime_small.csv')
-    data['Report DateTime'] = pd.to_datetime(data['Report DateTime'])
-    data['Year'] = data['Report DateTime'].dt.year
-    return data
-
-df = load_data()
-
-# 3. Sidebar Controls
-st.sidebar.header("Filter Controls")
-
-# Year Slider
-years = sorted(df['Year'].unique())
-selected_year = st.sidebar.select_slider(
-    "Select Year", 
-    options=years, 
-    value=max(years)
+# ----------------------------
+# Page config
+# ----------------------------
+st.set_page_config(
+    page_title="Seattle Rental Property Dashboard",
+    layout="wide"
 )
 
-# Crime Type Multiselect
-crime_options = sorted(df['Offense Parent Group'].unique())
-selected_crimes = st.sidebar.multiselect(
-    "Select Crime Categories",
-    options=crime_options,
-    default=crime_options[:5]
+# ----------------------------
+# Title and overview
+# ----------------------------
+st.title("Seattle Rental Property Dashboard")
+
+st.markdown("""
+This dashboard explores rental property patterns in Seattle.
+It focuses on spatial distribution, property size, differences across zip codes, and registration trends over time.
+""")
+
+# ----------------------------
+# Load data
+# ----------------------------
+df = pd.read_csv("Rental_Property_Registration_20260413.csv")
+
+# Data cleaning
+df["RegisteredDate"] = pd.to_datetime(df["RegisteredDate"], errors="coerce")
+df["RentalHousingUnits"] = pd.to_numeric(df["RentalHousingUnits"], errors="coerce")
+df["Latitude"] = pd.to_numeric(df["Latitude"], errors="coerce")
+df["Longitude"] = pd.to_numeric(df["Longitude"], errors="coerce")
+df["OriginalZip"] = pd.to_numeric(df["OriginalZip"], errors="coerce")
+
+df = df.dropna(subset=["RegisteredDate", "RentalHousingUnits", "Latitude", "Longitude", "OriginalZip"])
+df["OriginalZip"] = df["OriginalZip"].astype(int).astype(str)
+
+# ----------------------------
+# Sidebar filters
+# ----------------------------
+st.sidebar.header("Filters")
+
+max_units = int(df["RentalHousingUnits"].max())
+unit_range = st.sidebar.slider(
+    "Select rental unit range",
+    min_value=0,
+    max_value=max_units,
+    value=(0, min(20, max_units))
 )
 
-# Apply Filters
-mask = (df['Year'] == selected_year) & (df['Offense Parent Group'].isin(selected_crimes))
-filtered_df = df[mask]
+top_zip_options = sorted(df["OriginalZip"].unique().tolist())
+selected_zips = st.sidebar.multiselect(
+    "Select zip codes",
+    options=top_zip_options,
+    default=top_zip_options
+)
 
-# 4. Key Metrics
-m1, m2, m3 = st.columns(3)
-m1.metric("Total Incidents", f"{len(filtered_df):,}")
-m2.metric("Active Neighborhoods (MCPP)", filtered_df['MCPP'].nunique())
-m3.metric("Selected Year", selected_year)
+# Apply filters
+df_filtered = df[
+    (df["RentalHousingUnits"] >= unit_range[0]) &
+    (df["RentalHousingUnits"] <= unit_range[1]) &
+    (df["OriginalZip"].isin(selected_zips))
+]
 
-st.divider()
+# ----------------------------
+# Chart 1: Density Map
+# ----------------------------
+st.subheader("1. Density of Rental Properties")
 
-# 5. Interactive Charts
-col_left, col_right = st.columns([1, 1])
+fig_map = px.density_mapbox(
+    df_filtered,
+    lat="Latitude",
+    lon="Longitude",
+    z="RentalHousingUnits",
+    radius=10,
+    center=dict(lat=47.6062, lon=-122.3321),
+    zoom=10,
+    mapbox_style="carto-positron",
+    title="Density of Rental Properties"
+)
+st.plotly_chart(fig_map, use_container_width=True)
 
-with col_left:
-    st.subheader("Incident Frequency by Category")
-    counts = filtered_df['Offense Parent Group'].value_counts().reset_index()
-    fig_bar = px.bar(
-        counts, 
-        x='Offense Parent Group', 
-        y='count', 
-        color='Offense Parent Group',
-        template="plotly_white"
-    )
-    st.plotly_chart(fig_bar, use_container_width=True)
+st.caption("Rental properties are concentrated in certain areas, especially in central Seattle.")
 
-with col_right:
-    st.subheader("Geographical Distribution")
-    fig_map = px.scatter_mapbox(
-        filtered_df, 
-        lat="Latitude", 
-        lon="Longitude",
-        color="Offense Parent Group",
-        hover_name="Offense", 
-        mapbox_style="carto-positron", 
-        zoom=10
-    )
-    st.plotly_chart(fig_map, use_container_width=True)
+# ----------------------------
+# Chart 2: Histogram
+# ----------------------------
+st.subheader("2. Distribution of Rental Housing Units")
 
-# 6. Raw Data Table
-with st.expander("View Filtered Raw Data"):
-    st.dataframe(filtered_df.sort_values('Report DateTime', ascending=False))
+fig_hist = px.histogram(
+    df_filtered[df_filtered["RentalHousingUnits"] <= 20],
+    x="RentalHousingUnits",
+    nbins=20,
+    title="Distribution of Rental Housing Units (0–20 Range)"
+)
+st.plotly_chart(fig_hist, use_container_width=True)
+
+st.caption("Most properties have a small number of units, while larger properties are less common.")
+
+# ----------------------------
+# Chart 3: Zip Code Bar
+# ----------------------------
+st.subheader("3. Top Zip Codes by Number of Properties")
+
+zip_count = (
+    df_filtered["OriginalZip"]
+    .value_counts()
+    .nlargest(10)
+    .reset_index()
+)
+zip_count.columns = ["zip", "count"]
+
+fig_zip = px.bar(
+    zip_count,
+    x="zip",
+    y="count",
+    title="Top 10 Zip Codes by Number of Properties"
+)
+st.plotly_chart(fig_zip, use_container_width=True)
+
+st.caption("Some zip codes have noticeably more registered rental properties than others.")
+
+# ----------------------------
+# Chart 4: Time Trend
+# ----------------------------
+st.subheader("4. Registration Trend Over Time")
+
+monthly = (
+    df_filtered
+    .groupby(df_filtered["RegisteredDate"].dt.to_period("M"))
+    .size()
+    .reset_index(name="count")
+)
+monthly["RegisteredDate"] = monthly["RegisteredDate"].astype(str)
+monthly["RegisteredDate"] = pd.to_datetime(monthly["RegisteredDate"])
+
+fig_time = px.area(
+    monthly,
+    x="RegisteredDate",
+    y="count",
+    title="Rental Property Registrations Over Time"
+)
+st.plotly_chart(fig_time, use_container_width=True)
+
+st.caption("Registration activity changes over time and shows an overall upward trend in the dataset.")
