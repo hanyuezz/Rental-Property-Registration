@@ -100,7 +100,7 @@ with col1:
         lat="Latitude",
         lon="Longitude",
         z="RentalHousingUnits",
-        radius=12,
+        radius=8,
         center=dict(lat=47.6062, lon=-122.3321),
         zoom=10,
         mapbox_style="carto-positron",
@@ -204,5 +204,12 @@ st.markdown(
     - The zip code chart compares the areas with the highest number of properties.  
     - The time series shows how registration activity changes across months.  
     - Filters on the left allow users to explore the data by unit size, zip code, and property size category.
+    """
+)
+st.markdown("---")
+st.markdown(
+    """
+    **Data Source:**  
+    Seattle Open Data — Rental Property Registration dataset.
     """
 )
