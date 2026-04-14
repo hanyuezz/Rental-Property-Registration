@@ -5,12 +5,18 @@ import plotly.express as px
 # ----------------------------
 # Page setup
 # ----------------------------
-st.set_page_config(page_title="Seattle Rental Property Dashboard", layout="wide")
+st.set_page_config(
+    page_title="Seattle Rental Property Dashboard",
+    layout="wide"
+)
 
+# ----------------------------
+# Title and intro
+# ----------------------------
 st.title("Seattle Rental Property Dashboard")
 st.markdown(
     """
-    This dashboard explores rental property patterns in Seattle, focusing on location, 
+    This dashboard explores rental property patterns in Seattle, focusing on location,
     size distribution, area differences, and registration activity over time.
     """
 )
@@ -49,8 +55,6 @@ def categorize_units(x):
         return "Large"
 
 df["UnitCategory"] = df["RentalHousingUnits"].apply(categorize_units)
-df["Year"] = df["RegisteredDate"].dt.year
-df["Month"] = df["RegisteredDate"].dt.to_period("M").astype(str)
 
 # ----------------------------
 # Sidebar filters
@@ -79,7 +83,9 @@ selected_categories = st.sidebar.multiselect(
     default=category_options
 )
 
-# Apply filters
+# ----------------------------
+# Filtered dataset for non-map charts
+# ----------------------------
 df_filtered = df[
     (df["RentalHousingUnits"] >= unit_range[0]) &
     (df["RentalHousingUnits"] <= unit_range[1]) &
@@ -88,32 +94,35 @@ df_filtered = df[
 ].copy()
 
 # ----------------------------
-# Row 1
+# Chart 1: Map (full width, using full data)
+# ----------------------------
+st.subheader("Density of Rental Properties")
+
+fig_map = px.density_mapbox(
+    df,
+    lat="Latitude",
+    lon="Longitude",
+    z="RentalHousingUnits",
+    radius=8,
+    center=dict(lat=47.6062, lon=-122.3321),
+    zoom=10,
+    mapbox_style="carto-positron",
+    title=None
+)
+
+fig_map.update_layout(
+    height=650,
+    margin=dict(l=0, r=0, t=0, b=0)
+)
+
+st.plotly_chart(fig_map, use_container_width=True)
+
+# ----------------------------
+# Row 2: Histogram + Zip Bar
 # ----------------------------
 col1, col2 = st.columns(2)
 
-# ----------------------------
-# Chart 1: Density Map
-# ----------------------------
 with col1:
-    st.subheader("Density of Rental Properties")
-
-
-    fig_map = px.density_mapbox(
-        df,
-        lat="Latitude",
-        lon="Longitude",
-        z="RentalHousingUnits",
-        radius=10,
-        center=dict(lat=47.6062, lon=-122.3321),
-        zoom=10,
-        mapbox_style="carto-positron",
-        title=None
-    )
-
-    st.plotly_chart(fig_map, use_container_width=True)
-
-with col2:
     st.subheader("Distribution of Rental Units")
 
     fig_hist = px.histogram(
@@ -128,12 +137,7 @@ with col2:
     )
     st.plotly_chart(fig_hist, use_container_width=True)
 
-# ----------------------------
-# Row 2
-# ----------------------------
-col3, col4 = st.columns(2)
-
-with col3:
+with col2:
     st.subheader("Top 10 Zip Codes by Number of Properties")
 
     zip_count = (
@@ -158,7 +162,12 @@ with col3:
     )
     st.plotly_chart(fig_zip, use_container_width=True)
 
-with col4:
+# ----------------------------
+# Row 3: Time Trend + Pie
+# ----------------------------
+col3, col4 = st.columns(2)
+
+with col3:
     st.subheader("Monthly Rental Property Registrations")
 
     monthly = (
@@ -181,24 +190,22 @@ with col4:
     )
     st.plotly_chart(fig_time, use_container_width=True)
 
-# ----------------------------
-# Row 3
-# ----------------------------
-st.subheader("Property Size Categories")
+with col4:
+    st.subheader("Property Size Categories (Filtered)")
 
-cat_count = df_filtered["UnitCategory"].value_counts().reset_index()
-cat_count.columns = ["Category", "count"]
+    cat_count = df_filtered["UnitCategory"].value_counts().reset_index()
+    cat_count.columns = ["Category", "count"]
 
-fig_cat = px.pie(
-    cat_count,
-    names="Category",
-    values="count",
-    title=None
-)
-st.plotly_chart(fig_cat, use_container_width=True)
+    fig_cat = px.pie(
+        cat_count,
+        names="Category",
+        values="count",
+        title=None
+    )
+    st.plotly_chart(fig_cat, use_container_width=True)
 
 # ----------------------------
-# Bottom notes
+# Notes and source
 # ----------------------------
 st.markdown("---")
 st.markdown(
@@ -208,10 +215,10 @@ st.markdown(
     - The histogram focuses on smaller rental properties, where most observations are concentrated.  
     - The zip code chart compares the areas with the highest number of properties.  
     - The time series shows how registration activity changes across months.  
-    - Filters on the left allow users to explore the data by unit size, zip code, and property size category.
+    - The filters on the left allow users to explore the data by unit size, zip code, and property size category.  
     """
 )
-st.markdown("---")
+
 st.markdown(
     """
     **Data Source:**  
