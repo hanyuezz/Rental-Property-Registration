@@ -99,12 +99,11 @@ with col1:
         df_filtered,
         lat="Latitude",
         lon="Longitude",
-        z="RentalHousingUnits",
-        radius=12,
+        radius=7,
         center=dict(lat=47.6062, lon=-122.3321),
         zoom=10,
-       mapbox_style="carto-positron",
-       title=None
+        mapbox_style="carto-positron",
+        title=None
 
     )
     st.plotly_chart(fig_map, use_container_width=True)
