@@ -123,7 +123,7 @@ st.plotly_chart(fig_map, use_container_width=True)
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("Distribution of Rental Units")
+    st.subheader("Distribution of Rental Units                 ")
 
     fig_hist = px.histogram(
         df_filtered[df_filtered["RentalHousingUnits"] <= 20],
