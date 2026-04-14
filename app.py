@@ -92,20 +92,25 @@ df_filtered = df[
 # ----------------------------
 col1, col2 = st.columns(2)
 
+# ----------------------------
+# Chart 1: Density Map
+# ----------------------------
 with col1:
     st.subheader("Density of Rental Properties")
 
+
     fig_map = px.density_mapbox(
-        df_filtered,
+        df,
         lat="Latitude",
         lon="Longitude",
-        radius=7,
+        z="RentalHousingUnits",
+        radius=10,
         center=dict(lat=47.6062, lon=-122.3321),
         zoom=10,
         mapbox_style="carto-positron",
         title=None
-
     )
+
     st.plotly_chart(fig_map, use_container_width=True)
 
 with col2:
