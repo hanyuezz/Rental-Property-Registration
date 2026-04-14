@@ -23,11 +23,16 @@ df["RegisteredDate"] = pd.to_datetime(df["RegisteredDate"], errors="coerce")
 df["RentalHousingUnits"] = pd.to_numeric(df["RentalHousingUnits"], errors="coerce")
 df["Latitude"] = pd.to_numeric(df["Latitude"], errors="coerce")
 df["Longitude"] = pd.to_numeric(df["Longitude"], errors="coerce")
-df["OriginalZip"] = pd.to_numeric(df["OriginalZip"], errors="coerce")
+df["RegisteredDate"] = pd.to_datetime(df["RegisteredDate"], errors="coerce")
+df["RentalHousingUnits"] = pd.to_numeric(df["RentalHousingUnits"], errors="coerce")
+df["Latitude"] = pd.to_numeric(df["Latitude"], errors="coerce")
+df["Longitude"] = pd.to_numeric(df["Longitude"], errors="coerce")
 
 df = df.dropna(subset=["RegisteredDate", "RentalHousingUnits", "Latitude", "Longitude", "OriginalZip"])
 
-df["OriginalZip"] = df["OriginalZip"].astype(int).astype(str)
+df["OriginalZip"] = df["OriginalZip"].astype(str).str.extract(r"(\d+)")[0]
+df = df[df["OriginalZip"].str.len() == 5]
+df = df[df["OriginalZip"].str.startswith("98")]
 
 # ----------------------------
 # Feature Engineering
