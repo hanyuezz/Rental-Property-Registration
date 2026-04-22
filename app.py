@@ -179,7 +179,7 @@ with col3:
     monthly["RegisteredDate"] = pd.to_datetime(monthly["RegisteredDate"].astype(str))
     monthly = monthly.sort_values("RegisteredDate")
 
-    fig_time = px.area(
+    fig_time = px.line(
         monthly,
         x="RegisteredDate",
         y="count",
