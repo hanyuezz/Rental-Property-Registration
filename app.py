@@ -99,7 +99,7 @@ df_filtered = df[
 st.subheader("Density of Rental Properties")
 
 fig_map = px.density_mapbox(
-    df,
+    df_filtered,
     lat="Latitude",
     lon="Longitude",
     z="RentalHousingUnits",
@@ -116,7 +116,6 @@ fig_map.update_layout(
 )
 
 st.plotly_chart(fig_map, use_container_width=True)
-
 # ----------------------------
 # Row 2: Histogram + Zip Bar
 # ----------------------------
