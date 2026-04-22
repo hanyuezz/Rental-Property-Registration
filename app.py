@@ -125,15 +125,19 @@ with col1:
     st.subheader("Distribution of Rental Units Across Properties")
 
     fig_hist = px.histogram(
-        df_filtered[df_filtered["RentalHousingUnits"] <= 20],
+        df_filtered,
         x="RentalHousingUnits",
-        nbins=20,
+        nbins=40,
         title=None
     )
+
     fig_hist.update_layout(
-        xaxis_title="RentalHousingUnits",
+        xaxis_title="Number of Rental Units",
         yaxis_title="Count"
     )
+
+    fig_hist.update_xaxes(range=[0, 100])
+
     st.plotly_chart(fig_hist, use_container_width=True)
 
 with col2:
