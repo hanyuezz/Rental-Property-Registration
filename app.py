@@ -177,6 +177,7 @@ with col3:
         .reset_index(name="count")
     )
     monthly["RegisteredDate"] = pd.to_datetime(monthly["RegisteredDate"].astype(str))
+    monthly = monthly.sort_values("RegisteredDate")
 
     fig_time = px.area(
         monthly,
@@ -184,10 +185,16 @@ with col3:
         y="count",
         title=None
     )
+
     fig_time.update_layout(
         xaxis_title="Registration Date",
         yaxis_title="Number of Registrations"
     )
+
+    fig_time.update_xaxes(
+        range=[monthly["RegisteredDate"].min(), monthly["RegisteredDate"].max()]
+    )
+
     st.plotly_chart(fig_time, use_container_width=True)
 
 with col4:
