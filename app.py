@@ -176,6 +176,7 @@ with col3:
         .size()
         .reset_index(name="count")
     )
+
     monthly["RegisteredDate"] = pd.to_datetime(monthly["RegisteredDate"].astype(str))
     monthly = monthly.sort_values("RegisteredDate")
 
@@ -191,12 +192,18 @@ with col3:
         yaxis_title="Number of Registrations"
     )
 
+    # ✅ 关键1：强制从2024年开始（没有2023）
     fig_time.update_xaxes(
-        range=[monthly["RegisteredDate"].min(), monthly["RegisteredDate"].max()]
+        range=["2024-01-01", monthly["RegisteredDate"].max()],
+        
+        # ✅ 关键2：刻度改成每3个月
+        dtick="M3",
+        
+        # ✅ 关键3：格式更清楚
+        tickformat="%Y-%m"
     )
 
     st.plotly_chart(fig_time, use_container_width=True)
-
 with col4:
     st.subheader("Property Size Categories (Filtered)")
 
