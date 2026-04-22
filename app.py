@@ -205,19 +205,42 @@ with col3:
 
     st.plotly_chart(fig_time, use_container_width=True)
 with col4:
-    st.subheader("Property Size Categories (Filtered)")
+    st.subheader("Registration Activity by Month and Weekday")
 
-    cat_count = df_filtered["UnitCategory"].value_counts().reset_index()
-    cat_count.columns = ["Category", "count"]
+    heatmap_data = df_filtered.copy()
+    heatmap_data["Month"] = heatmap_data["RegisteredDate"].dt.month_name().str[:3]
+    heatmap_data["Weekday"] = heatmap_data["RegisteredDate"].dt.day_name()
 
-    fig_cat = px.pie(
-        cat_count,
-        names="Category",
-        values="count",
-        title=None
+    month_order = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    weekday_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+    heatmap_count = (
+        heatmap_data.groupby(["Weekday", "Month"])
+        .size()
+        .reset_index(name="count")
     )
-    st.plotly_chart(fig_cat, use_container_width=True)
 
+    fig_heat = px.density_heatmap(
+        heatmap_count,
+        x="Month",
+        y="Weekday",
+        z="count",
+        color_continuous_scale="Blues",
+        title=None,
+        text_auto=True,
+        category_orders={
+            "Month": month_order,
+            "Weekday": weekday_order
+        }
+    )
+
+    fig_heat.update_layout(
+        xaxis_title="Month",
+        yaxis_title="Day of Week"
+    )
+
+    st.plotly_chart(fig_heat, use_container_width=True)
 # ----------------------------
 # Notes and source
 # ----------------------------
