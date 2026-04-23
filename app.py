@@ -24,7 +24,7 @@ st.markdown(
 # ----------------------------
 # Load data
 # ----------------------------
-df = pd.read_csv("Rental_Property_Registration_20260413(1)(1).csv")
+df = pd.read_csv("Rental_Property_Registration_20260413.csv")
 
 # ----------------------------
 # Data cleaning
